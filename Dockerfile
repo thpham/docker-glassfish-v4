@@ -21,7 +21,9 @@ RUN echo 'LANG="en_EN.UTF-8"' > /etc/default/locale
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -q python-software-properties
 
 # install SSH server so we can connect multiple times to the container
-RUN apt-get install -y openssh-server && mkdir /var/run/sshd
+RUN apt-get install -y openssh-server supervisor && mkdir /var/run/sshd && mkdir -p /var/log/supervisor
+
+ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # install oracle java from PPA
 RUN add-apt-repository ppa:webupd8team/java -y
@@ -31,7 +33,7 @@ RUN apt-get install -y oracle-java7-installer && apt-get clean
 
 # Set oracle java as the default java
 RUN update-java-alternatives -s java-7-oracle
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-7-oracle" >> ~/.bashrc
+RUN echo 'export JAVA_HOME="/usr/lib/jvm/java-7-oracle"' >> ~/.bashrc
 ENV JAVA_HOME /usr/lib/jvm/java-7-oracle
 
 # Install some utilities
@@ -55,13 +57,13 @@ RUN cd /tmp; ./glassfish-4.0-unix-ml.sh -a gf4.conf -s
 #remove the installer
 RUN rm /tmp/glassfish-4.0-unix-ml.sh
 
-RUN echo "export GF_HOME=/opt/glassfish4" >> ~/.bashrc
+RUN echo 'export GF_HOME="/opt/glassfish4"' >> ~/.bashrc
 ENV GF_HOME /opt/glassfish4
 
 ENV PATH $PATH:$JAVA_HOME/bin:$GF_HOME/bin
+RUN export PATH=$PATH
 
-RUN ./asadmin create-service
-RUN service GlassFish_domain1 start
+# PORT FORWARD THE ADMIN PORT, HTTP LISTENER-1 PORT, HTTPS LISTENER PORT, JMS, PURE JMX CLIENTS PORT, MESSAGE QUEUE PORT, IIOP PORT, IIOP/SSL PORT, IIOP/SSL PORT WITH MUTUAL AUTHENTICATION, OSGI_SHELL, JAVA_DEBUGGER, SSH
+EXPOSE 4848 8080 8181 7676 8686 7676 3700 3820 3920 6666 9009 22
 
-# PORT FORWARD THE ADMIN PORT, HTTP LISTENER-1 PORT, HTTPS LISTENER PORT, JMS, PURE JMX CLIENTS PORT, MESSAGE QUEUE PORT, IIOP PORT, IIOP/SSL PORT, IIOP/SSL PORT WITH MUTUAL AUTHENTICATION, OSGI_SHELL, JAVA_DEBUGGER
-EXPOSE 4848 8080 8181 7676 8686 7676 3700 3820 3920 6666 9009
+CMD ["/usr/bin/supervisord"]
