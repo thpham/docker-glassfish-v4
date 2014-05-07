@@ -1,29 +1,22 @@
-# GlassFish Server Open Source Edition 4.0 + Oracle JDK 1.7.0_51 
+# GlassFish Server Open Source Edition 4.0 + Oracle JDK 1.7.0_55 
 #
-# DOCKER-VERSION 0.7.6 
+# DOCKER-VERSION 0.10.0 
 #
-# VERSION 0.0.1
+# VERSION 0.0.2
 
-FROM ubuntu:precise
+FROM phusion/baseimage
 MAINTAINER Thomas Pham "thomas.pham@ithings.ch"
 
 # Ok, nonetheless, let's first make sure the package repository and system is up-to-date
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
 RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get -y dist-upgrade
 
-#install locale
-RUN apt-get install language-pack-en -y
+#define locale
 RUN echo 'LANG="en_EN.UTF-8"' > /etc/default/locale
 
 # install python-software-properties (so you can do add-apt-repository)
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y -q python-software-properties
-
-# install SSH server so we can connect multiple times to the container
-RUN apt-get install -y openssh-server supervisor && mkdir /var/run/sshd && mkdir -p /var/log/supervisor
-
-ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # install oracle java from PPA
 RUN add-apt-repository ppa:webupd8team/java -y
@@ -66,4 +59,11 @@ RUN export PATH=$PATH
 # PORT FORWARD THE ADMIN PORT, HTTP LISTENER-1 PORT, HTTPS LISTENER PORT, JMS, PURE JMX CLIENTS PORT, MESSAGE QUEUE PORT, IIOP PORT, IIOP/SSL PORT, IIOP/SSL PORT WITH MUTUAL AUTHENTICATION, OSGI_SHELL, JAVA_DEBUGGER, SSH
 EXPOSE 4848 8080 8181 7676 8686 7676 3700 3820 3920 6666 9009 22
 
-CMD ["/usr/bin/supervisord"]
+ADD glassfish4.sh /etc/my_init.d/glassfish4.sh
+RUN chmod +x /etc/my_init.d/glassfish4.sh
+
+# Use baseimage-docker's init system.
+CMD ["/sbin/my_init"]
+
+# Clean up APT when done.
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
