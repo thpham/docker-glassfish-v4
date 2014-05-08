@@ -2,9 +2,9 @@
 #
 # DOCKER-VERSION 0.10.0 
 #
-# VERSION 0.0.2
+# VERSION 0.2
 
-FROM phusion/baseimage
+FROM phusion/baseimage:0.9.9
 MAINTAINER Thomas Pham "thomas.pham@ithings.ch"
 
 # Ok, nonetheless, let's first make sure the package repository and system is up-to-date
